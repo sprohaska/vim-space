@@ -102,6 +102,8 @@ endif
 " Mapping of <Space>/<S-Space> and possibly <BS>
 noremap <expr> <silent> <Space>   <SID>do_space(0, "<Space>")
 noremap <expr> <silent> <S-Space> <SID>do_space(1, "<S-Space>")
+nnoremap <expr> <silent> <Space>   <SID>do_space(0, "<Space>", "n")
+nnoremap <expr> <silent> <S-Space> <SID>do_space(1, "<S-Space>", "n")
 
 if exists("g:space_disable_select_mode")
     silent! sunmap <Space>
@@ -541,21 +543,25 @@ function! s:setup_space(type, command, ...)
     return cmd
 endfunc
 
-function! s:do_space(shift, default)
+function! s:do_space(shift, default, ...)
     let cmd = a:default
     " <Space>
     if a:shift == 0
         if exists("s:space_move")
-            let cmd = <SID>maybe_open_fold(s:space_move)
-            call <SID>debug_msg("do_space(cmd = " . cmd . ")")
+            let cmd = s:space_move
         endif
     " <S-Space> and <BS>
     else
         if exists("s:shift_space_move")
-            let cmd = <SID>maybe_open_fold(s:shift_space_move)
-            call <SID>debug_msg("do_space(cmd = " . cmd . ")")
+            let cmd = s:shift_space_move
         endif
     endif
+    if a:0 > 0
+        let mode = a:1
+        let cmd = get(g:space_map, mode . " " . cmd, cmd)
+    endif
+    let cmd = <SID>maybe_open_fold(cmd)
+    call <SID>debug_msg("do_space(cmd = " . cmd . ")")
     return cmd
 endfunc
 
