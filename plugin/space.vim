@@ -57,6 +57,10 @@
 "
 " Disable <Space> for undolist movements, e.g. g- and g+
 "   let g:space_no_undolist = 1
+"
+" Provide custom mappings
+"   let g:space_map = {}
+"   let g:space_map['n *'] = "n\<c-o>"
 
 " It is possible to display the current command assigned to <Space> in the
 " status line using the GetSpaceMovement() function. Here's an example:
@@ -90,6 +94,10 @@ elseif exists("g:space_loaded")
     finish
 endif
 let g:space_loaded = 1
+
+if !exists("g:space_map")
+    let g:space_map = {}
+endif
 
 " Mapping of <Space>/<S-Space> and possibly <BS>
 noremap <expr> <silent> <Space>   <SID>do_space(0, "<Space>")
@@ -134,26 +142,30 @@ if !exists("g:space_no_search") || !g:space_no_search
     " do not override visual mappings for * and #
     " because these are often used for visual search functions
     if maparg('*', 'v') != ''
-        nnoremap <expr> <silent> *           <SID>setup_space("search", "*")
+        nnoremap <expr> <silent> *           <SID>setup_space("search", "*", "n")
         onoremap <expr> <silent> *           <SID>setup_space("search", "*")
         nnoremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
         onoremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
     else
         noremap <expr> <silent> *           <SID>setup_space("search", "*")
+        nnoremap <expr> <silent> *           <SID>setup_space("search", "*", "n")
         noremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
     endif
 
     if maparg('#', 'v') != ''
-        nnoremap <expr> <silent> # <SID>setup_space("search", "#")
+        nnoremap <expr> <silent> # <SID>setup_space("search", "#", "n")
         onoremap <expr> <silent> # <SID>setup_space("search", "#")
     else
         noremap  <expr> <silent> # <SID>setup_space("search", "#")
+        nnoremap  <expr> <silent> # <SID>setup_space("search", "#", "n")
     endif
 
     noremap <expr> <silent> g* <SID>setup_space("search", "g*")
     noremap <expr> <silent> g# <SID>setup_space("search", "g#")
     noremap <expr> <silent> n  <SID>setup_space("search", "n")
     noremap <expr> <silent> N  <SID>setup_space("search", "N")
+    nnoremap <expr> <silent> n  <SID>setup_space("search", "n", "n")
+    nnoremap <expr> <silent> N  <SID>setup_space("search", "N", "n")
 
     if exists("g:space_disable_select_mode")
         silent! sunmap *
@@ -173,10 +185,10 @@ endif
 " jump commands
 " NOTE: Jumps are not motions. They can't be used in Visual mode.
 if !exists("g:space_no_jump") || !g:space_no_jump
-    nnoremap <expr> <silent> g, <SID>setup_space("cjump", "g,")
-    nnoremap <expr> <silent> g; <SID>setup_space("cjump", "g;")
-    nnoremap <expr> <silent> <C-O> <SID>setup_space("jump", "\<C-o>")
-    nnoremap <expr> <silent> <C-I> <SID>setup_space("jump", "\<C-i>")
+    nnoremap <expr> <silent> g, <SID>setup_space("cjump", "g,", "n")
+    nnoremap <expr> <silent> g; <SID>setup_space("cjump", "g;", "n")
+    nnoremap <expr> <silent> <C-O> <SID>setup_space("jump", "\<C-o>", "n")
+    nnoremap <expr> <silent> <C-I> <SID>setup_space("jump", "\<C-i>", "n")
 endif
 
 " diff next/prev
@@ -431,8 +443,13 @@ function! s:parse_cmd_line()
     return "\<CR>"
 endfunc
 
-function! s:setup_space(type, command)
+function! s:setup_space(type, command, ...)
     let cmd = a:command
+    " Try to remap command if mode available.
+    if a:0 > 0
+        let mode = a:1
+        let cmd = get(g:space_map, mode . " " . cmd, cmd)
+    endif
     let s:cmd_type = "undefined"
 
     if a:type == "char"
