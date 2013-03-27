@@ -542,21 +542,18 @@ function! s:setup_space(type, command, ...)
 endfunc
 
 function! s:do_space(shift, default)
+    let cmd = a:default
     " <Space>
     if a:shift == 0
         if exists("s:space_move")
             let cmd = <SID>maybe_open_fold(s:space_move)
             call <SID>debug_msg("do_space(cmd = " . cmd . ")")
-        else
-            let cmd = a:default
         endif
     " <S-Space> and <BS>
     else
         if exists("s:shift_space_move")
             let cmd = <SID>maybe_open_fold(s:shift_space_move)
             call <SID>debug_msg("do_space(cmd = " . cmd . ")")
-        else
-            let cmd = a:default
         endif
     endif
     return cmd
